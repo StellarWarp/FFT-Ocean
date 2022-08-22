@@ -117,20 +117,34 @@ void GameApp::UpdateScene(float dt)
         {
             m_BasicEffect.SetFogState(m_EnabledFog);
         }
+        static float L = 25.6;
         static float A = 1.0f;
         static float G = 9.8f;
-        static float wind[] = { 1,0 };
-        if (ImGui::SliderFloat("A", &A, 0, 10, "%.1f"))
+        static float wind_theta = 0;
+        static float wind_speed = 1;
+        const float PI = 3.1415926f;
+        float wind[] = { wind_speed * cosf(wind_theta*PI), wind_speed * sinf(wind_theta*PI) };
+        if (ImGui::SliderFloat("L", &L, 0, 256, "%.1f"))
         {
-            m_Ocean.Precompute(m_pd3dImmediateContext.Get(), A, G, wind);
+            m_Ocean.Precompute(m_pd3dImmediateContext.Get(), L, A, G, wind);
+        }
+        if (ImGui::SliderFloat("A", &A, 0, 100, "%.1f"))
+        {
+            m_Ocean.Precompute(m_pd3dImmediateContext.Get(), L, A, G, wind);
         }
         if (ImGui::SliderFloat("G", &G, 0, 100, "%.1f"))
         {
-            m_Ocean.Precompute(m_pd3dImmediateContext.Get(), A, G, wind);
+            m_Ocean.Precompute(m_pd3dImmediateContext.Get(), L, A, G, wind);
         }
-        if (ImGui::SliderFloat2("Wind", wind, -2, 2, "%.1f"))
+        if (ImGui::SliderFloat("Wind Angle", &wind_theta, -1, 1, "%.2f"))
         {
-            m_Ocean.Precompute(m_pd3dImmediateContext.Get(), A, G, wind);
+            float wind[] = { wind_speed * cosf(wind_theta * PI), wind_speed * sinf(wind_theta * PI) };
+            m_Ocean.Precompute(m_pd3dImmediateContext.Get(), L, A, G, wind);
+        }
+        if (ImGui::SliderFloat("Wind Speed", &wind_speed, 0, 10, "%.1f"))
+        {
+            float wind[] = { wind_speed * cosf(wind_theta * PI), wind_speed * sinf(wind_theta * PI) };
+            m_Ocean.Precompute(m_pd3dImmediateContext.Get(), L, A, G, wind);
         }
     }
     ImGui::End();
@@ -178,7 +192,12 @@ void GameApp::DrawScene()
         m_BasicEffect.SetRenderTransparent();
         begin = false;
     }
+    
     m_Ocean.Draw(m_pd3dImmediateContext.Get(), m_BasicEffect);
+
+    m_BasicEffect.SetRenderWireframe();
+    m_Ocean.Draw(m_pd3dImmediateContext.Get(), m_BasicEffect);
+    m_BasicEffect.SetRenderTransparent();
 
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
@@ -198,7 +217,7 @@ bool GameApp::InitResource()
     //
     m_Ocean.InitResource(m_pd3dDevice.Get(), 256, 256, 5.0f, 5.0f, 0.03f, 0.625f, 2.0f, 0.2f, 0.0f, 0.0f);
     float wind[] = { 1, 0 };
-    m_Ocean.Precompute(m_pd3dImmediateContext.Get(),1,9.9, wind);
+    m_Ocean.Precompute(m_pd3dImmediateContext.Get(), 256, 1, 9.9, wind);
 
     // ******************
     // 初始化摄像机

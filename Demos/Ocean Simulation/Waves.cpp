@@ -29,28 +29,28 @@ void Waves::InitResource(ID3D11Device* device, uint32_t rows, uint32_t cols,
     m_TexU = texU;
     m_TexV = texV;
 
-    m_TimeStep = timeStep;
-    m_SpatialStep = spatialStep;
-    m_FlowSpeedX = flowSpeedX;
-    m_FlowSpeedY = flowSpeedY;
-    m_AccumulateTime = 0.0f;
+    //m_TimeStep = timeStep;
+    //m_SpatialStep = spatialStep;
+    m_WindSpeedX = flowSpeedX;
+    m_WindSpeedY = flowSpeedY;
+    //m_AccumulateTime = 0.0f;
 
-    float d = damping * timeStep + 2.0f;
-    float e = (waveSpeed * waveSpeed) * (timeStep * timeStep) / (spatialStep * spatialStep);
-    m_K1 = (damping * timeStep - 2.0f) / d;
-    m_K2 = (4.0f - 8.0f * e) / d;
-    m_K3 = (2.0f * e) / d;
+    //float d = damping * timeStep + 2.0f;
+    //float e = (waveSpeed * waveSpeed) * (timeStep * timeStep) / (spatialStep * spatialStep);
+    //m_K1 = (damping * timeStep - 2.0f) / d;
+    //m_K2 = (4.0f - 8.0f * e) / d;
+    //m_K3 = (2.0f * e) / d;
 
     m_MeshData = Geometry::CreateGrid(XMFLOAT2((cols - 1) * spatialStep, (rows - 1) * spatialStep), XMUINT2(cols - 1, rows - 1), XMFLOAT2(1.0f, 1.0f));
     Model::CreateFromGeometry(m_Model, device, m_MeshData, cpuWrite);
     m_pModel = &m_Model;
 
-    if (TextureManager::Get().GetTexture("..\\Texture\\water2.dds") == nullptr)
-        TextureManager::Get().CreateFromFile("..\\Texture\\water2.dds", false, true);
-    //m_Model.materials[0].Set<std::string>("$Diffuse", "..\\Texture\\water2.dds");
-    m_Model.materials[0].Set<XMFLOAT4>("$AmbientColor", XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f));
+    //if (TextureManager::Get().GetTexture("..\\Texture\\water2.dds") == nullptr)
+    //    TextureManager::Get().CreateFromFile("..\\Texture\\water2.dds", false, true);
+    ////m_Model.materials[0].Set<std::string>("$Diffuse", "..\\Texture\\water2.dds");
+    m_Model.materials[0].Set<XMFLOAT4>("$AmbientColor", XMFLOAT4(0.0f, 0.6f, 1.0f, 1.0f));
     m_Model.materials[0].Set<XMFLOAT4>("$DiffuseColor", XMFLOAT4(0.0f, 0.6f, 1.0f, 1.0f));
-    m_Model.materials[0].Set<XMFLOAT4>("$SpecularColor", XMFLOAT4(0.4f, 0.4f, 0.4f, 1.0f));
+    m_Model.materials[0].Set<XMFLOAT4>("$SpecularColor", XMFLOAT4(0.0f, 0.6f, 1.0f, 1.0f));
     m_Model.materials[0].Set<float>("$Opacity", 0.5f);
     m_Model.materials[0].Set<float>("$SpecularPower", 32.0f);
     m_Model.materials[0].Set<XMFLOAT2>("$TexOffset", XMFLOAT2());
@@ -130,10 +130,13 @@ void Ocean::InitResource(ID3D11Device* device,
 
 }
 
-void Ocean::Precompute(ID3D11DeviceContext* deviceContext, float A, float G, float wind[2])
+void Ocean::Precompute(ID3D11DeviceContext* deviceContext, float L,float A, float G, float wind[2])
 {
-
+    m_L = L;
+    m_A = A;
+    m_G = G;
     m_pEffectHelper->GetConstantBufferVariable("N")->SetUInt(m_NumCols);
+    m_pEffectHelper->GetConstantBufferVariable("kL")->SetFloat(L);
     m_pEffectHelper->GetConstantBufferVariable("A")->SetFloat(A);
     m_pEffectHelper->GetConstantBufferVariable("G")->SetFloat(G);
     m_pEffectHelper->GetConstantBufferVariable("wind")->SetFloatVector(2, wind);
@@ -153,10 +156,11 @@ void Ocean::OceanUpdate(ID3D11DeviceContext* deviceContext, float dt)
 {
         static float t = 0;
         t += dt;
-        m_pEffectHelper->GetConstantBufferVariable("Time")->SetFloat(t);
+        m_pEffectHelper->GetConstantBufferVariable("Time")->SetFloat(t/10);
         m_pEffectHelper->GetConstantBufferVariable("N")->SetUInt(m_NumCols);
-        m_pEffectHelper->GetConstantBufferVariable("A")->SetFloat(1.0f);
-        m_pEffectHelper->GetConstantBufferVariable("G")->SetFloat(9.8f);
+        m_pEffectHelper->GetConstantBufferVariable("kL")->SetFloat(m_L);
+        m_pEffectHelper->GetConstantBufferVariable("A")->SetFloat(m_A);
+        m_pEffectHelper->GetConstantBufferVariable("G")->SetFloat(m_G);
 
         m_pEffectHelper->SetUnorderedAccessBySlot(0, m_pHTide0Buffer->GetUnorderedAccess(), 0);
         m_pEffectHelper->SetUnorderedAccessBySlot(1, m_pHeight->GetUnorderedAccess(), 0);
@@ -172,7 +176,7 @@ void Ocean::OceanUpdate(ID3D11DeviceContext* deviceContext, float dt)
         deviceContext->CSSetUnorderedAccessViews(0, 4, nullUAVs, nullptr);
 
 
-        ////IFFT
+        //IFFT
         //参数设置
         m_pEffectHelper->GetConstantBufferVariable("TargetsCount")->SetUInt(1);
         m_pEffectHelper->GetConstantBufferVariable("Direction")->SetUInt(false);

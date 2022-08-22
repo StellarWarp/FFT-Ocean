@@ -6,10 +6,11 @@ static const float PI = 3.14159265358979323846;
 cbuffer CBPrecompute : register(b0)
 {
     uint N; // sections
+    float kL;//wave lambda
     float A;
     float G;
     float2 wind;
-    float3 pad0;
+    float2 pad0;
 }
 
 cbuffer CBUpdate : register(b1)
@@ -64,7 +65,9 @@ float2 gaussian(float2 id)
 
 float2 vec_k(uint2 id)
 {
-    return float2(2.0f * PI * id.x / N - PI, 2.0f * PI * id.y / N - PI);
+    int n = id.x - N / 2;
+    int m = id.y - N / 2;
+    return float2(2.0f * PI * n / kL, 2.0f * PI * m / kL);
 }
 
 float dispersion(float2 k)

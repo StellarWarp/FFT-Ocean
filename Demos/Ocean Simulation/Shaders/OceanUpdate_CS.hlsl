@@ -11,9 +11,27 @@ void UpdateH(float2 k, uint2 id)
     float omegat = dispersion(k) * Time;
     float c = cos(omegat);
     float s = sin(omegat);
-    
-    float2 h1 = complexMultiply(g_h0Data[id].xy, float2(c, s)); //h0
-    float2 h2 = complexMultiply(g_h0Data[id].zw, float2(c, -s)); //conj h0
+    float4 h0;
+    uint2 nm = id;
+    if (id.x < N / 2)
+    {
+        nm.x = id.x + N / 2;
+    }
+    else
+    {
+        nm.x = id.x - N / 2;
+    }
+    if(id.y < N/2)
+    {
+        nm.y = id.y + N / 2;
+    }
+    else
+    {
+        nm.y = id.y - N / 2;
+    }
+    h0 = g_h0Data[nm];
+    float2 h1 = complexMultiply(h0.xy, float2(c, s)); //h0
+    float2 h2 = complexMultiply(h0.zw, float2(c, -s)); //conj h0
 
     float2 HTilde = h1 + h2;
 

@@ -23,6 +23,11 @@ float D(float2 k)
     float theta = atan2(k.y, k.x) - atan2(wind.y, wind.x);
 
     return betaS / max(1e-7f, 2.0f * tanh(betaS * PI) * pow(cosh(betaS * theta), 2));
+    //float k_len = length(k);
+    //float h = 10;
+    //sqrt(G * k_len * tanh(k_len * h));
+    //return abs(dot(k, wind));
+
 }
 float Ph(float2 k)
 {
@@ -39,12 +44,14 @@ float Ph(float2 k)
     float damping = 1.0f;
     float L2 = l2 * damping * damping;
     
-    return A * exp(-1.0f / (k_len2 * l2)) / k_len4*  exp(-k_len2 * L2);
+    //return A * exp(-1.0f / (k_len2 * l2)) / k_len4*  exp(-k_len2 * L2);
+    return A * exp(-1.0f / (k_len2 * l2)) / k_len4 / 100;
 }
 //complex
 float4 H0(float2 k, int2 id)
 {
     float2 rand = gaussian(id);
+    //float2 rand = float2(1.0f, 1.0f);
     float2 h0 = rand * sqrt(abs(Ph(k) * D(k)) / 2.0f);
     float2 h0Conj = rand * sqrt(abs(Ph(-k) * D(-k)) / 2.0f);
     h0Conj.y *= -1.0f;
