@@ -1,4 +1,6 @@
-# FFT-Ocean Base On Xjun's DX11 tutorial framework
+# FFT-Ocean 
+
+this project is base on XJun's DX11 tutorial framework
 
 to build see
 
